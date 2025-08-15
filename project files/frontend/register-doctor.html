@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Doctor Registration</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #e0f7fa;
+       background-image: url('c.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+   background-position: center top 50px
+  
+    }
+
+    header {
+      background-color: #0288d1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .logo a {
+      font-weight: bold;
+      color: #ffffff;
+      font-size: 22px;
+      text-decoration: none;
+    }
+
+    .nav-links a {
+      margin-left: 20px;
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 50px;
+      flex-wrap: wrap;
+    }
+
+    .form-box {
+      max-width: 500px;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    .form-box h2 {
+      margin-bottom: 20px;
+      color: #0288d1;
+      text-align: center;
+    }
+
+    .form-box input,
+    .form-box textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 20px;
+      border: 1px solid #b3e5fc;
+      background-color: #f0faff;
+      outline: none;
+    }
+
+    .form-box small {
+      display: block;
+      color: #555;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .form-box .error-message {
+      color: red;
+      text-align: center;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    .form-box button {
+      display: block;
+      margin: 0 auto;
+      padding: 10px 30px;
+      background-color: #0288d1;
+      border: none;
+      color: white;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .form-box button:hover {
+      background-color: #0277bd;
+    }
+
+    .form-box p {
+      margin-top: 15px;
+      text-align: center;
+      color: #333;
+    }
+
+    .form-box a {
+      color: #0288d1;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><a href="landing.html">MediCareBook</a></div>
+    <div class="nav-links">
+      <a href="landing.html">Home</a>
+      <a href="login.html">Login</a>
+      <a href="register-doctor.html">Register</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="form-box">
+      <h2>Doctor Registration</h2>
+      <form id="doctorRegisterForm">
+        <input type="text" id="name" placeholder="Full name" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="tel" id="phone" placeholder="Phone" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <small>Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</small>
+
+        <input type="text" id="specialization" placeholder="Specialization" required />
+        <input type="number" id="experience" placeholder="Experience (years)" required />
+        <textarea id="address" placeholder="Clinic Address" rows="3" required></textarea>
+        <input type="number" id="fees" placeholder="Consultation Fees (₹)" required />
+        <input type="text" id="timing" placeholder="Available Timing (e.g. 9AM - 5PM)" required />
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <button type="submit">Register as Doctor</button>
+        <p>Already registered? <a href="login.html">Login</a></p>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById("doctorRegisterForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+      const password = document.getElementById("password").value;
+      const specialization = document.getElementById("specialization").value;
+      const experience = document.getElementById("experience").value;
+      const address = document.getElementById("address").value;
+      const fees = document.getElementById("fees").value;
+      const timing = document.getElementById("timing").value;
+      const role = "doctor";
+      const errorBox = document.getElementById("errorMessage");
+
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+      if (!passwordRegex.test(password)) {
+        errorBox.textContent = "Password must include uppercase, lowercase, number, special character.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      errorBox.textContent = "";
+      errorBox.style.display = "none";
+
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            phone,
+            password,
+            specialization,
+            experience,
+            address,
+            fees,
+            timing,
+            role
+          })
+        });
+
+        const result = await res.json();
+        if (res.status === 201) {
+          alert(result.message);
+          window.location.href = "login.html";
+        } else {
+          errorBox.textContent = result.message || "Registration failed.";
+          errorBox.style.display = "block";
+        }
+      } catch (err) {
+        errorBox.textContent = "Something went wrong. Please try again.";
+        errorBox.style.display = "block";
+        console.error(err);
+      }
+    });
+  </script>
+
+</body>
+</html>

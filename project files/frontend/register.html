@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register - MediCareBook</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #e0f7fa;
+      background-image: url('c.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+   background-position: center top 50px
+    }
+
+    header {
+      background-color: #0288d1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .logo a {
+      font-weight: bold;
+      font-size: 22px;
+      text-decoration: none;
+      color: white;
+    }
+
+    .nav-links a {
+      margin-left: 20px;
+      text-decoration: none;
+      color: white;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 80px 20px;
+    }
+
+    .form-box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #0288d1;
+      margin-bottom: 25px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 20px;
+      border: 1px solid #b3e5fc;
+      background-color: #f0faff;
+    }
+
+    p {
+      margin-top: 30px;
+    }
+
+    a {
+      color: #0288d1;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><a href="landing.html">MediCareBook</a></div>
+    <div class="nav-links">
+      <a href="landing.html">Home</a>
+      <a href="login.html">Login</a>
+      <a href="register.html">Register</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="form-box">
+      <h2>Select Your Role</h2>
+      <select id="roleSelect">
+        <option value="" disabled selected>Choose role to register</option>
+        <option value="user">User</option>
+        <option value="doctor">Doctor</option>
+      </select>
+      <p>Already have an account? <a href="login.html">Login here</a></p>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById("roleSelect").addEventListener("change", function () {
+      const role = this.value;
+      if (role === "user") {
+        window.location.href = "register-user.html";
+      } else if (role === "doctor") {
+        window.location.href = "register-doctor.html";
+      }
+    });
+  </script>
+
+</body>
+</html>

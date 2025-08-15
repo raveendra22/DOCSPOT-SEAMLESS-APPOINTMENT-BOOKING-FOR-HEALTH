@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Doctor Appointments - MediCareBook</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      background-color: #e3f2fd;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #0288d1;
+      color: white;
+      padding: 20px;
+    }
+
+    .sidebar h2 {
+      font-size: 22px;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      margin-bottom: 18px;
+      font-weight: bold;
+    }
+
+    .sidebar a:hover {
+      color: #ffeb3b;
+    }
+
+    .main {
+      flex: 1;
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .appointment {
+      background: white;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .appointment p {
+      margin: 6px 0;
+    }
+
+    .no-appointments {
+      font-style: italic;
+      color: #555;
+    }
+
+    .status-btn {
+      margin-top: 10px;
+      margin-right: 10px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .confirm {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .cancel {
+      background-color: #f44336;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Doctor Panel</h2>
+    <a href="doctor-dashboard.html">🏠 Dashboard</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+
+  <div class="main">
+    <h1>📅 My Appointments</h1>
+    <div id="appointmentsContainer">
+      <!-- Appointments will be listed here -->
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const userRaw = localStorage.getItem("user") || sessionStorage.getItem("user");
+    const expiry = Number(localStorage.getItem("expiry") || sessionStorage.getItem("expiry"));
+    let doctor;
+
+    try {
+      doctor = JSON.parse(userRaw);
+    } catch (e) {
+      console.warn("User parse error:", e);
+    }
+
+    function logout() {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    if (!token || !doctor || doctor.role !== "doctor" || !expiry || Date.now() > expiry) {
+      alert("Session expired or unauthorized. Please log in again.");
+      logout();
+    }
+
+    async function fetchAppointments() {
+      try {
+        const res = await fetch(`http://localhost:5000/api/appointments/doctor/${doctor._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const result = await res.json();
+        const container = document.getElementById("appointmentsContainer");
+
+        if (!res.ok) throw new Error(result.message || "Failed to fetch appointments.");
+
+        if (!result.length) {
+          container.innerHTML = `<p class="no-appointments">No appointments scheduled.</p>`;
+          return;
+        }
+
+        container.innerHTML = result.map(app => `
+          <div class="appointment" id="app-${app._id}">
+            <p><strong>Patient:</strong> ${app.user?.name || 'N/A'}</p>
+            <p><strong>Date:</strong> ${app.date}</p>
+            <p><strong>Time:</strong> ${app.time}</p>
+            <p><strong>Status:</strong> <span id="status-${app._id}">${app.status}</span></p>
+            ${app.status === "Pending" ? `
+              <button class="status-btn confirm" onclick="updateStatus('${app._id}', 'Confirmed')">✅ Confirm</button>
+              <button class="status-btn cancel" onclick="updateStatus('${app._id}', 'Cancelled')">❌ Cancel</button>
+            ` : ""}
+          </div>
+        `).join("");
+      } catch (err) {
+        alert("❌ " + err.message);
+        logout();
+      }
+    }
+
+    async function updateStatus(id, newStatus) {
+      try {
+        const res = await fetch(`http://localhost:5000/api/appointments/${id}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+
+        // Update status text
+        document.getElementById(`status-${id}`).textContent = newStatus;
+
+        // Remove buttons
+        const appDiv = document.getElementById(`app-${id}`);
+        if (appDiv) {
+          const buttons = appDiv.querySelectorAll("button");
+          buttons.forEach(btn => btn.remove());
+        }
+
+        alert(`Appointment ${newStatus}`);
+      } catch (err) {
+        alert("❌ " + err.message);
+      }
+    }
+
+    fetchAppointments();
+  </script>
+
+</body>
+</html>

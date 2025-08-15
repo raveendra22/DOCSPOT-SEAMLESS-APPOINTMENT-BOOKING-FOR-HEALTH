@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Doctor Dashboard - MediCareBook</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0faff;
+      display: flex;
+    }
+
+    header {
+      background-color: #0288d1;
+      color: white;
+      padding: 15px 30px;
+      font-size: 22px;
+      font-weight: bold;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+
+    .sidebar {
+      background-color: #01579b;
+      width: 220px;
+      min-height: 100vh;
+      padding-top: 70px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      color: white;
+    }
+
+    .sidebar h3 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #b3e5fc;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+      transition: background 0.3s ease;
+    }
+
+    .sidebar a:hover {
+      background-color: #0277bd;
+    }
+
+    .main-content {
+      margin-left: 220px;
+      padding: 100px 30px 30px;
+      flex: 1;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .card h4 {
+      color: #0288d1;
+    }
+
+    .appointment {
+      margin-bottom: 12px;
+      padding: 10px;
+      border-left: 4px solid #0288d1;
+      background: #e1f5fe;
+      border-radius: 6px;
+    }
+
+    .no-appointments {
+      color: #555;
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+      .main-content {
+        margin: 100px 15px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    Doctor Dashboard - MediCareBook
+  </header>
+
+  <div class="sidebar">
+    <h3>Doctor Panel</h3>
+    <a href="#">Dashboard</a>
+    <a href="doctor-appointments.html">📅 My Appointments</a>
+    <a href="#">Patient Records</a>
+    <a href="#">Schedule</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </div>
+
+  <div class="main-content">
+    <div class="card">
+      <h4>Welcome, Doctor 👨‍⚕️</h4>
+      <p>This is your dashboard. Below are your upcoming appointments.</p>
+    </div>
+
+    <div class="card">
+      <h4>Today’s Appointments</h4>
+      <div id="appointmentsContainer">
+        <p class="no-appointments">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const userRaw = localStorage.getItem("user") || sessionStorage.getItem("user");
+    const expiry = Number(localStorage.getItem("expiry") || sessionStorage.getItem("expiry"));
+    let doctor;
+
+    try {
+      doctor = JSON.parse(userRaw);
+    } catch (e) {
+      console.warn("User parse error:", e);
+    }
+
+    function logout() {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    if (!token || !doctor || doctor.role !== "doctor" || !expiry || Date.now() > expiry) {
+      alert("Session expired or unauthorized. Please log in again.");
+      logout();
+    }
+
+    async function fetchAppointments() {
+      try {
+        const res = await fetch(`http://localhost:5000/api/appointments/doctor/${doctor._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const result = await res.json();
+        const container = document.getElementById("appointmentsContainer");
+
+        if (!res.ok) throw new Error(result.message || "Failed to fetch appointments.");
+
+        if (!result.length) {
+          container.innerHTML = `<p class="no-appointments">No appointments scheduled yet.</p>`;
+          return;
+        }
+
+        container.innerHTML = result.map(app => `
+          <div class="appointment">
+            <p><strong>Patient:</strong> ${app.user?.name || 'N/A'}</p>
+            <p><strong>Date:</strong> ${app.date}</p>
+            <p><strong>Time:</strong> ${app.time}</p>
+            <p><strong>Status:</strong> ${app.status}</p>
+          </div>
+        `).join("");
+      } catch (err) {
+        document.getElementById("appointmentsContainer").innerHTML = `<p class="no-appointments">❌ ${err.message}</p>`;
+      }
+    }
+
+    fetchAppointments();
+  </script>
+
+</body>
+</html>

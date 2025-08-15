@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - MediCareBook</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #e0f7fa;
+      background-image: url('b.jpg');
+  background-size: cover;        
+  background-repeat: no-repeat;  
+  background-position: center; 
+  background-position: center top 50px;
+      
+    }
+
+    header {
+      background-color: #0288d1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .logo a {
+      font-weight: bold;
+      font-size: 22px;
+      text-decoration: none;
+      color: white;
+    }
+
+    .nav-links a {
+      margin-left: 20px;
+      text-decoration: none;
+      color: white;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 50px;
+      flex-wrap: wrap;
+    }
+
+    .form-box {
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .form-box h2 {
+      margin-bottom: 20px;
+      color: #0288d1;
+      text-align: center;
+    }
+
+    .form-box input[type="email"],
+    .form-box input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 20px;
+      border: 1px solid #b3e5fc;
+      background-color: #f0faff;
+      outline: none;
+    }
+
+    .radio-group {
+      margin: 15px 0;
+      text-align: center;
+    }
+
+    .radio-group label {
+      margin: 0 10px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .remember {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .form-box button {
+      width: 100%;
+      padding: 10px;
+      background-color: #0288d1;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .form-box button:hover {
+      background-color: #0277bd;
+    }
+
+    .form-box p {
+      margin-top: 15px;
+      text-align: center;
+      color: #333;
+    }
+
+    .form-box a {
+      color: #0288d1;
+      text-decoration: none;
+    }
+
+  
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        padding: 30px;
+      }
+
+      .image-box {
+        margin-bottom: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><a href="landing.html">MediCareBook</a></div>
+    <div class="nav-links">
+      <a href="landing.html">Home</a>
+      <a href="login.html">Login</a>
+      <a href="register.html">Register</a>
+    </div>
+  </header>
+
+  <main class="container">
+  
+
+    <div class="form-box">
+      <h2>Sign in to your account</h2>
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Email" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Password" required />
+
+        <div class="radio-group">
+          <label><input type="radio" name="role" value="admin" required /> Admin</label>
+          <label><input type="radio" name="role" value="doctor" /> Doctor</label>
+          <label><input type="radio" name="role" value="user" /> User</label>
+        </div>
+
+        <div class="remember">
+          <label><input type="checkbox" id="rememberMe" /> Remember Me</label>
+        </div>
+
+        <button type="submit" id="submitBtn">Let's Enter</button>
+        <p>Don't have an account? <a href="register.html">Register here</a></p>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const roleInput = document.querySelector('input[name="role"]:checked');
+      const rememberMe = document.getElementById("rememberMe").checked;
+
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Logging in...";
+
+      if (!email || !password || !roleInput) {
+        alert("Please fill all fields and select a role.");
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Let's Enter";
+        return;
+      }
+
+      const selectedRole = roleInput.value;
+
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, role: selectedRole }) // ✅ role included
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          alert(result.message || "Login failed.");
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Let's Enter";
+          return;
+        }
+
+        if (result.user.role !== selectedRole) {
+          alert(`You selected "${selectedRole}", but your account is registered as "${result.user.role}".`);
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Let's Enter";
+          return;
+        }
+
+        const storage = rememberMe ? localStorage : sessionStorage;
+        const expiryTime = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+        storage.setItem("token", result.token);
+        storage.setItem("user", JSON.stringify(result.user));
+        storage.setItem("expiry", expiryTime);
+
+        alert("Login successful!");
+
+        const redirectMap = {
+          admin: "admin-dashboard.html",
+          doctor: "doctor-dashboard.html",
+          user: "user-dashboard.html"
+        };
+
+        window.location.href = redirectMap[selectedRole];
+
+      } catch (error) {
+        console.error("Login error:", error);
+        alert("Server error. Please try again.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Let's Enter";
+      }
+    });
+  </script>
+
+</body>
+</html>
